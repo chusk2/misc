@@ -1,3 +1,6 @@
+# Web scrapping of PDF files from:
+# https://www.perfect-english-grammar.com/english-language-pdf.html
+
 import requests
 from pathlib import Path
 import os
@@ -12,20 +15,23 @@ def download_file(url):
         links = url_soup.find_all('a')
         pdf_links = []
         for link in links:
-            if link.href.endswith('.pdf'):
-                pdf_links.append(link)
+            # not all links have href attribute
+            try:
+                if link['href'].endswith('.pdf'):
+                    pdf_links.append(link['href'])
+            except KeyError:
+                continue
         for pdf in pdf_links:
-            pdf_link_res = requests.get(pdf_link)
+            pdf_link_res = requests.get(pdf)
             # get the pdf filename
             # find the last forward slash position in string.
-            #From here, there's the pdf filename
+            # From here, there's the pdf filename
             index_counting_backwards = pdf[::-1].find('/')
-            filename = pdf[len(pdf)-index_counting_backwards:]  
+            filename = pdf[len(pdf)-index_counting_backwards:]
             with open(filename, 'wb') as pdffile:
                 for chunk in pdf_link_res.iter_content(100000):
                     pdffile.write(chunk)
             print(f'{filename} downloaded successfully.')
-    
     except Exception as excp:
         not_found_error = '404 Client Error: Not Found for url:'
         if not_found_error in str(excp):
